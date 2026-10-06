@@ -83,62 +83,99 @@ function shuffleCards(cards) {
         [cards[i], cards[randomIndex]] = [cards[randomIndex], cards[i]];
     }
 }
-shuffleCards(cards);
+
 
 let firstCard = null;
 let secondCard = null;
 let isLocked = false;
+let movesCount = 0;
+let pairsCount = 0;
+let mismatchTimer = null;
 
-cards.forEach((cardValue) => {
-    const card = document.createElement('button');
+function createGame() {
+    if (mismatchTimer !== null) {
+        clearTimeout(mismatchTimer);
+        mismatchTimer = null;
+    }
 
-    card.classList.add('card');
+    firstCard = null;
+    secondCard = null;
+    isLocked = false;
 
-    card.dataset.value = cardValue;
-    card.textContent = '?';
+    movesCount = 0;
+    pairsCount = 0;
 
-    card.addEventListener('click', () => {
-        if (isLocked) {
-            return;
-        }
+    moves.textContent = 'Moves: 0';
+    pairs.textContent = 'Pairs: 0 / 8';
 
-        if (card.classList.contains('matched')) {
-            return;
-        }
+    gameBoard.replaceChildren();
 
-        if (firstCard === null) {
-            firstCard = card;
+    shuffleCards(cards);
+
+
+    cards.forEach((cardValue) => {
+        const card = document.createElement('button');
+
+        card.classList.add('card');
+
+        card.dataset.value = cardValue;
+        card.textContent = '?';
+
+        card.addEventListener('click', () => {
+            if (isLocked) {
+                return;
+            }
+
+            if (card.classList.contains('matched')) {
+                return;
+            }
+
+            if (firstCard === null) {
+                firstCard = card;
+                card.textContent = card.dataset.value;
+                return;
+            }
+
+            if (card === firstCard) {
+                return;
+            }
+
+            secondCard = card;
             card.textContent = card.dataset.value;
-            return;
-        }
+            movesCount++;
+            moves.textContent = `Moves: ${movesCount}`;
 
-        if (card === firstCard) {
-            return;
-        }
+            if (firstCard.dataset.value === secondCard.dataset.value) {
+                firstCard.classList.add('matched');
+                secondCard.classList.add('matched');
 
-        secondCard = card;
-        card.textContent = card.dataset.value;
-
-        if (firstCard.dataset.value === secondCard.dataset.value) {
-            firstCard.classList.add('matched');
-            secondCard.classList.add('matched');
-
-            firstCard = null;
-            secondCard = null;
-        } else {
-            isLocked = true;
-
-            setTimeout(() => {
-                firstCard.textContent = '?';
-                secondCard.textContent = '?';
+                pairsCount++;
+                pairs.textContent = `Pairs: ${pairsCount} / 8`;
 
                 firstCard = null;
                 secondCard = null;
-                isLocked = false;
-            }, 1000);
-        }
+            } else {
+                isLocked = true;
+
+                mismatchTimer = setTimeout(() => {
+                    firstCard.textContent = '?';
+                    secondCard.textContent = '?';
+
+                    firstCard = null;
+                    secondCard = null;
+                    isLocked = false;
+                    mismatchTimer = null;
+                }, 1000);
+            }
+        });
+
+        gameBoard.append(card);
     });
-    gameBoard.append(card);
+}
+
+createGame();
+newGameButton.addEventListener('click', () => {
+    createGame();
 });
 
 headerButtons.append(leaderboardButton);
